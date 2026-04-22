@@ -4,6 +4,7 @@ const app = express();
 const path = require("path");
 
 const userRouter = require("./api/users/users.router");
+const configRouter = require("./api/configuration/configuration.router");
 
 // Allow all CORS origins
 const cors = require("cors");
@@ -25,6 +26,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 
 app.use("/users", userRouter);
+app.use("/config", configRouter);
 
 
 // Simple root route for cPanel check
