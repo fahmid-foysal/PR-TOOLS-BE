@@ -46,14 +46,9 @@ CREATE TABLE product_images (
 
 CREATE TABLE offer_categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    product_id INT NOT NULL,
     offer_category_name VARCHAR(255) NOT NULL,
     starting_date DATE NOT NULL,
-    expiry_date DATE NOT NULL,
-    CONSTRAINT fk_offer_categories_product
-        FOREIGN KEY (product_id) REFERENCES products(id)
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
+    expiry_date DATE NOT NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE product_offers (
