@@ -1,14 +1,16 @@
 require("dotenv").config();
 const express = require("express");
-const app = express();
+const cors = require("cors");
 const path = require("path");
+
+const app = express();
 
 const userRouter = require("./api/users/users.router");
 const configRouter = require("./api/configuration/configuration.router");
+const productsRouter = require("./api/products/products.router");
+const orderRouter = require("./api/order/order.router");
 
 // Allow all CORS origins
-const cors = require("cors");
-
 app.use(cors({ origin: "*" }));
 
 app.use((req, res, next) => {
@@ -22,12 +24,17 @@ app.use((req, res, next) => {
   next();
 });
 
-
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+// Static uploads
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// Routers
 app.use("/users", userRouter);
 app.use("/config", configRouter);
-
+app.use("/products", productsRouter);
+app.use("/order", orderRouter);
 
 // Simple root route for cPanel check
 app.get("/", (req, res) => {
