@@ -22,6 +22,7 @@ function ProductDetailsPage() {
 
   if (q.isLoading) return <LoadingState label="Loading product..." />;
   if (q.error) return <ErrorState message={(q.error as ApiError)?.message} onRetry={() => q.refetch()} />;
+  
   const p = q.data!;
   const images = p.images || [];
 
@@ -32,8 +33,14 @@ function ProductDetailsPage() {
         description={p.one_liner || undefined}
         actions={
           <>
-            <Button variant="outline" asChild><Link to="/products" search={() => ({})}><ArrowLeft className="h-4 w-4 mr-1" /> Back</Link></Button>
-            <Button asChild><Link to="/products/$productId/edit" params={{ productId: String(p.id) }}><Pencil className="h-4 w-4 mr-1" /> Edit</Link></Button>
+            <Button variant="outline" asChild>
+              <Link to="/products" search={() => ({})}><ArrowLeft className="h-4 w-4 mr-1" /> Back</Link>
+            </Button>
+            <Button asChild>
+              <Link to="/products/$productId/edit" params={{ productId: String(p.id) }}>
+                <Pencil className="h-4 w-4 mr-1" /> Edit
+              </Link>
+            </Button>
           </>
         }
       />
@@ -59,15 +66,18 @@ function ProductDetailsPage() {
             )}
           </CardContent>
         </Card>
+
         <div className="space-y-4">
           <Card>
             <CardContent className="p-6 space-y-2 text-sm">
-              <Row label="Brand" value={p.brand?.name} />
-              <Row label="Category" value={p.category?.name} />
+              {/* Fixed: brand_name and category_name */}
+              <Row label="Brand" value={p.brand?.brand_name} />
+              <Row label="Category" value={p.category?.category_name} />
               <Row label="Purchase price" value={formatCurrency(p.purchase_price)} />
               <Row label="Sell price" value={formatCurrency(p.sell_price)} highlight />
             </CardContent>
           </Card>
+          
           <Card>
             <CardContent className="p-6">
               <h4 className="text-sm font-semibold mb-3">Offers</h4>
@@ -75,7 +85,12 @@ function ProductDetailsPage() {
                 <ul className="space-y-3">
                   {p.offers.map((o: any) => (
                     <li key={String(o.id)} className="text-sm border-l-2 border-primary pl-3">
-                      <div className="font-medium">{typeof o.offer_category === "string" ? o.offer_category : o.offer_category?.name || "Offer"}</div>
+                      <div className="font-medium">
+                        {/* Fixed: offer_category_name */}
+                        {typeof o.offer_category === "string" 
+                          ? o.offer_category 
+                          : o.offer_category?.offer_category_name || "Offer"}
+                      </div>
                       <div className="text-emerald-600 font-semibold">{formatCurrency(o.offered_price)}</div>
                       <div className="text-xs text-muted-foreground">Expires {formatDate(o.offer_expires_at)}</div>
                     </li>
@@ -96,7 +111,9 @@ function Row({ label, value, highlight }: { label: string; value: any; highlight
   return (
     <div className="flex items-center justify-between">
       <span className="text-muted-foreground">{label}</span>
-      <span className={highlight ? "font-semibold text-foreground" : "text-foreground"}>{value || "—"}</span>
+      <span className={highlight ? "font-semibold text-foreground" : "text-foreground"}>
+        {value || "—"}
+      </span>
     </div>
   );
 }

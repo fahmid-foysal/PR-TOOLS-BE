@@ -115,6 +115,8 @@ function ProductsListPage() {
               />
             </div>
           </form>
+          
+          {/* Brand Filter */}
           <Select
             value={search.brand_id ?? ALL}
             onValueChange={(v) => setParams({ brand_id: v === ALL ? undefined : v })}
@@ -123,10 +125,14 @@ function ProductsListPage() {
             <SelectContent>
               <SelectItem value={ALL}>All brands</SelectItem>
               {brands.map((b: any) => (
-                <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>
+                <SelectItem key={b.id} value={String(b.id)}>
+                  {b.brand_name} {/* Fixed */}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
+
+          {/* Category Filter */}
           <Select
             value={search.category_id ?? ALL}
             onValueChange={(v) => setParams({ category_id: v === ALL ? undefined : v })}
@@ -135,10 +141,14 @@ function ProductsListPage() {
             <SelectContent>
               <SelectItem value={ALL}>All categories</SelectItem>
               {categories.map((c: any) => (
-                <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                <SelectItem key={c.id} value={String(c.id)}>
+                  {c.category_name} {/* Fixed */}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
+
+          {/* Offer Filter */}
           <Select
             value={search.offer_category_id ?? ALL}
             onValueChange={(v) => setParams({ offer_category_id: v === ALL ? undefined : v })}
@@ -147,7 +157,9 @@ function ProductsListPage() {
             <SelectContent>
               <SelectItem value={ALL}>All offer categories</SelectItem>
               {offerCats.map((o: any) => (
-                <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>
+                <SelectItem key={o.id} value={String(o.id)}>
+                  {o.offer_category_name} {/* Fixed */}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -190,7 +202,14 @@ function ProductsListPage() {
                 <TableBody>
                   {items.map((p) => {
                     const img = resolveImageUrl((p.images?.[0] as any)?.image_url || (p.images?.[0] as any)?.image || (p.images?.[0] as any)?.url);
-                    const offerCat = typeof p.offer_category === "string" ? p.offer_category : p.offer_category?.name;
+                    
+                    // Fixed: Access the correct field names within the joined objects
+                    const brandName = p.brand?.brand_name || (p as any).brand_name;
+                    const catName = p.category?.category_name || (p as any).category_name;
+                    const offerCatName = typeof p.offer_category === "string" 
+                      ? p.offer_category 
+                      : (p.offer_category as any)?.offer_category_name;
+
                     return (
                       <TableRow key={String(p.id)}>
                         <TableCell>
@@ -204,14 +223,18 @@ function ProductsListPage() {
                           <div className="font-medium">{p.product_name}</div>
                           {p.one_liner && <div className="text-xs text-muted-foreground line-clamp-1">{p.one_liner}</div>}
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground">{p.brand?.name || "—"}</TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground">{p.category?.name || "—"}</TableCell>
+                        <TableCell className="hidden md:table-cell text-muted-foreground">
+                          {brandName || "—"}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-muted-foreground">
+                          {catName || "—"}
+                        </TableCell>
                         <TableCell className="text-right font-medium">{formatCurrency(p.sell_price)}</TableCell>
                         <TableCell className="hidden lg:table-cell">
                           {p.offered_price != null ? (
                             <div className="text-xs">
                               <div className="font-semibold text-emerald-600">{formatCurrency(p.offered_price)}</div>
-                              <div className="text-muted-foreground">{offerCat || "—"} · exp {formatDate(p.offer_expires_at)}</div>
+                              <div className="text-muted-foreground">{offerCatName || "—"} · exp {formatDate(p.offer_expires_at)}</div>
                             </div>
                           ) : (
                             <span className="text-xs text-muted-foreground">—</span>

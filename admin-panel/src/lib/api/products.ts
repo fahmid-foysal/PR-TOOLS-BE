@@ -1,14 +1,22 @@
 import { apiRequest } from "./client";
 
-export type ProductImage = { id: string | number; image?: string; image_url?: string; url?: string };
+export type ProductImage = { 
+  id: string | number; 
+  image?: string; 
+  image_url?: string; 
+  url?: string 
+};
+
 export type ProductOffer = {
   id: string | number;
   offer_category_id?: string | number;
-  offer_category?: { id: string | number; name: string } | string;
+  // Fixed: Backend uses offer_category_name
+  offer_category?: { id: string | number; offer_category_name: string } | string;
   offered_price?: number;
   offer_amount?: number;
   offer_expires_at?: string;
 };
+
 export type Product = {
   id: string | number;
   product_name: string;
@@ -16,13 +24,15 @@ export type Product = {
   sell_price?: number;
   brand_id?: string | number;
   category_id?: string | number;
-  brand?: { id: string | number; name: string };
-  category?: { id: string | number; name: string };
+  // Fixed: Backend returns objects with _name suffix
+  brand?: { id: string | number; brand_name: string };
+  category?: { id: string | number; category_name: string };
   one_liner?: string;
   description?: string;
   images?: ProductImage[];
   offers?: ProductOffer[];
-  offer_category?: string | { name: string } | null;
+  // Fixed: For the top-level flattened offer data
+  offer_category?: string | { offer_category_name: string } | null;
   offered_price?: number | null;
   offer_expires_at?: string | null;
   [key: string]: unknown;

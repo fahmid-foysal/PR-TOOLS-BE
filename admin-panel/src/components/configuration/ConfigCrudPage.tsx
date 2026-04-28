@@ -29,18 +29,63 @@ function getApi(kind: ConfigKind) {
 
 export type ConfigKind = "brands" | "categories" | "offerCategories" | "homePageSections";
 
-const KIND_META: Record<ConfigKind, { singular: string; plural: string; queryKey: string; description: string }> = {
-  brands: { singular: "Brand", plural: "Brands", queryKey: "brands", description: "Manage product brands." },
-  categories: { singular: "Category", plural: "Categories", queryKey: "categories", description: "Top-level product categories." },
-  offerCategories: { singular: "Offer Category", plural: "Offer Categories", queryKey: "offer-categories", description: "Categorize promotional offers." },
-  homePageSections: { singular: "Home Page Section", plural: "Home Page Sections", queryKey: "home-page-sections", description: "Sections that appear on your storefront home page." },
+const KIND_META: Record<
+  ConfigKind,
+  {
+    singular: string;
+    plural: string;
+    queryKey: string;
+    description: string;
+    nameField: string;
+    hasOneLiner?: boolean;
+    hasDates?: boolean;
+  }
+> = {
+  brands: {
+    singular: "Brand",
+    plural: "Brands",
+    queryKey: "brands",
+    description: "Manage product brands.",
+    nameField: "brand_name",
+  },
+  categories: {
+    singular: "Category",
+    plural: "Categories",
+    queryKey: "categories",
+    description: "Top-level product categories.",
+    nameField: "category_name",
+  },
+  offerCategories: {
+    singular: "Offer Category",
+    plural: "Offer Categories",
+    queryKey: "offer-categories",
+    description: "Categorize promotional offers.",
+    nameField: "offer_category_name",
+    hasDates: true,
+  },
+  homePageSections: {
+    singular: "Home Page Section",
+    plural: "Home Page Sections",
+    queryKey: "home-page-sections",
+    description: "Sections that appear on your storefront home page.",
+    nameField: "section_name",
+    hasOneLiner: true,
+  },
 };
-
-const schema = z.object({
+const baseSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
   one_liner: z.string().max(200).optional().or(z.literal("")),
-  description: z.string().max(1000).optional().or(z.literal("")),
 });
+
+const withDatesSchema = baseSchema.extend({
+  starting_date: z.string().min(1, "Start date is required"),
+  expiry_date: z.string().min(1, "Expiry date is required"),
+});
+
+const getDisplayName = (it: ConfigItem): string => {
+  const name = it.brand_name || it.category_name || it.offer_category_name || it.section_name || it.name || it.title;
+  return typeof name === 'string' ? name : "—";
+};
 
 export function ConfigCrudPage({ kind }: { kind: ConfigKind }) {
   const meta = KIND_META[kind];
@@ -60,7 +105,7 @@ export function ConfigCrudPage({ kind }: { kind: ConfigKind }) {
   const items: ConfigItem[] = Array.isArray(data) ? data : (data as any)?.data || [];
   const filtered = items.filter((i) => {
     if (!search) return true;
-    const hay = `${i.name || i.title || ""} ${i.one_liner || ""}`.toLowerCase();
+    const hay = `${getDisplayName(i)} ${i.one_liner || ""}`.toLowerCase();
     return hay.includes(search.toLowerCase());
   });
 
@@ -121,9 +166,9 @@ export function ConfigCrudPage({ kind }: { kind: ConfigKind }) {
               <TableBody>
                 {filtered.map((it) => (
                   <TableRow key={String(it.id)}>
-                    <TableCell className="font-medium">{it.name || it.title || "—"}</TableCell>
+                    <TableCell className="font-medium">{getDisplayName(it)}</TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground">
-                      {it.one_liner || it.description || "—"}
+                      {it.one_liner || "—"} 
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" onClick={() => setEditing(it)}>
@@ -149,6 +194,7 @@ export function ConfigCrudPage({ kind }: { kind: ConfigKind }) {
         onOpenChange={setCreating}
         title={`New ${meta.singular}`}
         api={api}
+        meta={meta}
         onSaved={onSaved}
       />
       <ConfigFormDialog
@@ -156,10 +202,17 @@ export function ConfigCrudPage({ kind }: { kind: ConfigKind }) {
         onOpenChange={(v) => !v && setEditing(null)}
         title={`Edit ${meta.singular}`}
         api={api}
+        meta={meta}
         item={editing || undefined}
         onSaved={onSaved}
       />
-      <DeleteConfig deleting={deleting} setDeleting={setDeleting} api={api} onDone={onSaved} singular={meta.singular} />
+      <DeleteConfig
+        deleting={deleting}
+        setDeleting={setDeleting}
+        api={api}
+        onDone={onSaved}
+        singular={meta.singular}
+      />
     </div>
   );
 }
@@ -191,7 +244,7 @@ function DeleteConfig({
       open={!!deleting}
       onOpenChange={(v) => !v && setDeleting(null)}
       title={`Delete ${singular}?`}
-      description={`This will permanently remove "${deleting?.name || deleting?.title}".`}
+      description={`This will permanently remove "${deleting ? getDisplayName(deleting) : ""}".`}
       loading={m.isPending}
       onConfirm={() => deleting && m.mutate(deleting.id)}
     />
@@ -203,6 +256,7 @@ function ConfigFormDialog({
   onOpenChange,
   title,
   api,
+  meta,
   item,
   onSaved,
 }: {
@@ -210,45 +264,67 @@ function ConfigFormDialog({
   onOpenChange: (v: boolean) => void;
   title: string;
   api: ApiClient;
+  meta: (typeof KIND_META)[ConfigKind];
   item?: ConfigItem;
   onSaved: () => void;
 }) {
   const [name, setName] = useState("");
   const [oneLiner, setOneLiner] = useState("");
-  const [description, setDescription] = useState("");
+  const [startingDate, setStartingDate] = useState("");
+  const [expiryDate, setExpiryDate] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Reset on open
-  useState(() => null);
-  if (open && item && name === "" && (item.name || item.title)) {
-    // hydrate once
-    setName(String(item.name || item.title || ""));
+  // Hydrate form when editing
+  if (open && item && name === "") {
+    setName(String(getDisplayName(item)));
     setOneLiner(String(item.one_liner || ""));
-    setDescription(String(item.description || ""));
+    setStartingDate(String(item.starting_date || ""));
+    setExpiryDate(String(item.expiry_date || ""));
   }
+
   // Clear when closed
-  if (!open && (name || oneLiner || description)) {
+  if (!open && (name || oneLiner || startingDate || expiryDate)) {
     setTimeout(() => {
       setName("");
       setOneLiner("");
-      setDescription("");
+      setStartingDate("");
+      setExpiryDate("");
       setErrors({});
     }, 200);
   }
 
   const m = useMutation({
     mutationFn: async () => {
-      const parsed = schema.safeParse({ name, one_liner: oneLiner, description });
+      const schema = meta.hasDates ? withDatesSchema : baseSchema;
+      const parsed = schema.safeParse({
+        name,
+        one_liner: oneLiner,
+        ...(meta.hasDates && { starting_date: startingDate, expiry_date: expiryDate }),
+      });
+
       if (!parsed.success) {
         const fe: Record<string, string> = {};
         for (const issue of parsed.error.issues) fe[issue.path[0] as string] = issue.message;
         setErrors(fe);
         throw new Error("Validation failed");
       }
+
       setErrors({});
-      const body: Record<string, unknown> = { name: parsed.data.name };
-      if (parsed.data.one_liner) body.one_liner = parsed.data.one_liner;
-      if (parsed.data.description) body.description = parsed.data.description;
+
+      // Use correct backend field name per kind
+      const body: Record<string, unknown> = {
+        [meta.nameField]: parsed.data.name,
+      };
+
+      if (meta.hasOneLiner) {
+        body.one_liner = oneLiner || null;
+      }
+
+      if (meta.hasDates && "starting_date" in parsed.data) {
+        body.starting_date = (parsed.data as any).starting_date;
+        body.expiry_date = (parsed.data as any).expiry_date;
+      }
+
       if (item) return api.update(item.id, body);
       return api.create(body);
     },
@@ -278,26 +354,50 @@ function ConfigFormDialog({
           className="space-y-4"
           noValidate
         >
+          {/* Name — always shown */}
           <div>
             <Label htmlFor="cf-name">Name *</Label>
             <Input id="cf-name" value={name} onChange={(e) => setName(e.target.value)} className="mt-1.5" />
             {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
           </div>
-          <div>
-            <Label htmlFor="cf-one">One-liner</Label>
-            <Input id="cf-one" value={oneLiner} onChange={(e) => setOneLiner(e.target.value)} className="mt-1.5" />
-            {errors.one_liner && <p className="text-xs text-destructive mt-1">{errors.one_liner}</p>}
-          </div>
-          <div>
-            <Label htmlFor="cf-desc">Description</Label>
-            <textarea
-              id="cf-desc"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="mt-1.5 w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-            />
-            {errors.description && <p className="text-xs text-destructive mt-1">{errors.description}</p>}
-          </div>
+
+          {/* One-liner — only homePageSections */}
+          {meta.hasOneLiner && (
+            <div>
+              <Label htmlFor="cf-one">One-liner</Label>
+              <Input id="cf-one" value={oneLiner} onChange={(e) => setOneLiner(e.target.value)} className="mt-1.5" />
+              {errors.one_liner && <p className="text-xs text-destructive mt-1">{errors.one_liner}</p>}
+            </div>
+          )}
+
+          {/* Dates — only offerCategories */}
+          {meta.hasDates && (
+            <>
+              <div>
+                <Label htmlFor="cf-start">Starting Date *</Label>
+                <Input
+                  id="cf-start"
+                  type="date"
+                  value={startingDate}
+                  onChange={(e) => setStartingDate(e.target.value)}
+                  className="mt-1.5"
+                />
+                {errors.starting_date && <p className="text-xs text-destructive mt-1">{errors.starting_date}</p>}
+              </div>
+              <div>
+                <Label htmlFor="cf-expiry">Expiry Date *</Label>
+                <Input
+                  id="cf-expiry"
+                  type="date"
+                  value={expiryDate}
+                  onChange={(e) => setExpiryDate(e.target.value)}
+                  className="mt-1.5"
+                />
+                {errors.expiry_date && <p className="text-xs text-destructive mt-1">{errors.expiry_date}</p>}
+              </div>
+            </>
+          )}
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={m.isPending}>
               Cancel

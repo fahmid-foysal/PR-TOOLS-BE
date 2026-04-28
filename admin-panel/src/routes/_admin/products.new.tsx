@@ -35,10 +35,13 @@ const NONE = "__none__";
 
 function NewProductPage() {
   const navigate = useNavigate();
+  
+  // Queries
   const brandsQ = useQuery({ queryKey: ["brands"], queryFn: () => configApi.brands.list() });
   const categoriesQ = useQuery({ queryKey: ["categories"], queryFn: () => configApi.categories.list() });
   const offerCatsQ = useQuery({ queryKey: ["offer-categories"], queryFn: () => configApi.offerCategories.list() });
 
+  // Extracting data safely based on backend field names
   const brands = (Array.isArray(brandsQ.data) ? brandsQ.data : (brandsQ.data as any)?.data) || [];
   const categories = (Array.isArray(categoriesQ.data) ? categoriesQ.data : (categoriesQ.data as any)?.data) || [];
   const offerCats = (Array.isArray(offerCatsQ.data) ? offerCatsQ.data : (offerCatsQ.data as any)?.data) || [];
@@ -71,15 +74,18 @@ function NewProductPage() {
       setErrors({});
       const fd = new FormData();
       const d = parsed.data;
+      
       fd.append("product_name", d.product_name);
       fd.append("purchase_price", String(d.purchase_price));
       fd.append("sell_price", String(d.sell_price));
       fd.append("brand_id", d.brand_id);
       fd.append("category_id", d.category_id);
+      
       if (d.one_liner) fd.append("one_liner", d.one_liner);
       if (d.description) fd.append("description", d.description);
       if (d.offer_category_id) fd.append("offer_category_id", d.offer_category_id);
       if (d.offer_amount) fd.append("offer_amount", d.offer_amount);
+      
       images.forEach((f) => fd.append("images", f));
       return productsApi.create(fd);
     },
@@ -136,7 +142,11 @@ function NewProductPage() {
                 <Select value={form.brand_id} onValueChange={(v) => set("brand_id", v)}>
                   <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select brand" /></SelectTrigger>
                   <SelectContent>
-                    {brands.map((b: any) => <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>)}
+                    {brands.map((b: any) => (
+                      <SelectItem key={b.id} value={String(b.id)}>
+                        {b.brand_name} {/* Fixed: Match backend field brand_name */}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {errors.brand_id && <p className="text-xs text-destructive mt-1">{errors.brand_id}</p>}
@@ -146,7 +156,11 @@ function NewProductPage() {
                 <Select value={form.category_id} onValueChange={(v) => set("category_id", v)}>
                   <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select category" /></SelectTrigger>
                   <SelectContent>
-                    {categories.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+                    {categories.map((c: any) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.category_name} {/* Fixed: Match backend field category_name */}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {errors.category_id && <p className="text-xs text-destructive mt-1">{errors.category_id}</p>}
@@ -173,7 +187,11 @@ function NewProductPage() {
                   <SelectTrigger className="mt-1.5"><SelectValue placeholder="None" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value={NONE}>None</SelectItem>
-                    {offerCats.map((o: any) => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}
+                    {offerCats.map((o: any) => (
+                      <SelectItem key={o.id} value={String(o.id)}>
+                        {o.offer_category_name} {/* Fixed: Match backend field offer_category_name */}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

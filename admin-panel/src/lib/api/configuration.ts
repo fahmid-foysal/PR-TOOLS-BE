@@ -28,6 +28,8 @@ function crud(prefix: string) {
   };
 }
 
+
+
 export const configApi = {
   brands: crud("/config/brand"),
   categories: crud("/config/category"),

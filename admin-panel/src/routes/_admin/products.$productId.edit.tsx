@@ -141,7 +141,11 @@ function EditProductPage() {
                   <Select value={form.brand_id} onValueChange={(v) => set("brand_id", v)}>
                     <SelectTrigger className="mt-1.5"><SelectValue placeholder="Brand" /></SelectTrigger>
                     <SelectContent>
-                      {brands.map((b: any) => <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>)}
+                      {brands.map((b: any) => (
+                        <SelectItem key={b.id} value={String(b.id)}>
+                          {b.brand_name} {/* Fixed to match backend */}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -150,7 +154,11 @@ function EditProductPage() {
                   <Select value={form.category_id} onValueChange={(v) => set("category_id", v)}>
                     <SelectTrigger className="mt-1.5"><SelectValue placeholder="Category" /></SelectTrigger>
                     <SelectContent>
-                      {categories.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+                      {categories.map((c: any) => (
+                        <SelectItem key={c.id} value={String(c.id)}>
+                          {c.category_name} {/* Fixed to match backend */}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -311,7 +319,10 @@ function OffersSection({ productId, offers, offerCats, onChanged }: { productId:
             {offers.map((o) => (
               <li key={String(o.id)} className="flex items-start justify-between gap-2 border border-border rounded-md p-3">
                 <div className="text-sm">
-                  <div className="font-medium">{typeof o.offer_category === "string" ? o.offer_category : o.offer_category?.name || "Offer"}</div>
+                  <div className="font-medium">
+                    {/* Fixed to check for offer_category_name */}
+                    {typeof o.offer_category === "string" ? o.offer_category : o.offer_category?.offer_category_name || "Offer"}
+                  </div>
                   <div className="text-emerald-600 font-semibold">{formatCurrency(o.offered_price)}</div>
                   <div className="text-xs text-muted-foreground">Expires {formatDate(o.offer_expires_at)}</div>
                 </div>
@@ -327,7 +338,11 @@ function OffersSection({ productId, offers, offerCats, onChanged }: { productId:
           <Select value={offerCategoryId} onValueChange={setOfferCategoryId}>
             <SelectTrigger><SelectValue placeholder="Offer category" /></SelectTrigger>
             <SelectContent>
-              {offerCats.map((o: any) => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}
+              {offerCats.map((o: any) => (
+                <SelectItem key={o.id} value={String(o.id)}>
+                  {o.offer_category_name} {/* Fixed to match backend */}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Input type="number" step="0.01" placeholder="Offered price" value={offeredPrice} onChange={(e) => setOfferedPrice(e.target.value)} />
@@ -362,14 +377,13 @@ function HomePageSection({
   const [sectionId, setSectionId] = useState("");
   const [deleting, setDeleting] = useState<any | null>(null);
 
-  // Try to derive existing placements for this product from the home-page-products list
   const existing: any[] = [];
   if (placements) {
     for (const sec of placements) {
       const list = sec.products || sec.items || [];
       for (const it of list) {
         const pid = String(it.product_id ?? it.product?.id ?? it.id);
-        if (pid === String(productId)) existing.push({ ...it, _sectionTitle: sec.title || sec.name });
+        if (pid === String(productId)) existing.push({ ...it, _sectionTitle: sec.section_name || sec.title || sec.name });
       }
     }
   }
@@ -417,7 +431,11 @@ function HomePageSection({
           <Select value={sectionId} onValueChange={setSectionId}>
             <SelectTrigger><SelectValue placeholder="Select section" /></SelectTrigger>
             <SelectContent>
-              {sections.map((s: any) => <SelectItem key={s.id} value={String(s.id)}>{s.title || s.name}</SelectItem>)}
+              {sections.map((s: any) => (
+                <SelectItem key={s.id} value={String(s.id)}>
+                  {s.section_name} {/* Fixed to match backend */}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Button className="w-full" onClick={() => add.mutate()} disabled={!sectionId || add.isPending}>
