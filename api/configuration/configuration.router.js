@@ -49,7 +49,7 @@ router.post(
   addBrand
 );
 
-router.get("/brand/all", checkToken("admin"), getBrands);
+router.get("/brand/all", getBrands);
 
 router.put(
   "/brand/update/:id",
@@ -100,7 +100,7 @@ router.post(
   addCategory
 );
 
-router.get("/category/all", checkToken("admin"), getCategories);
+router.get("/category/all", getCategories);
 
 router.put(
   "/category/update/:id",
@@ -175,7 +175,7 @@ router.post(
   addOfferCategory
 );
 
-router.get("/offer-category/all", checkToken("admin"), getOfferCategories);
+router.get("/offer-category/all", getOfferCategories);
 
 router.put(
   "/offer-category/update/:id",
@@ -257,7 +257,7 @@ router.post(
   addHomePageSection
 );
 
-router.get("/home-page-section/all", checkToken("admin"), getHomePageSections);
+router.get("/home-page-section/all", getHomePageSections);
 
 router.put(
   "/home-page-section/update/:id",
@@ -309,7 +309,7 @@ router.post(
   addBanner
 );
 
-router.get("/banner/all", checkToken("admin"), getBanners);
+router.get("/banner/all", getBanners);
 
 router.put(
   "/banner/update/:id",
