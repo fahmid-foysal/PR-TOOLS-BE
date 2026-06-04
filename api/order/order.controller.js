@@ -139,8 +139,8 @@ module.exports = {
         },
         order: {
           payment_method: req.body.payment_method,
-          account_number: req.body.account_number,
-          transaction_no: req.body.transaction_no,
+          account_number: req.body.account_number || null,
+          transaction_no: req.body.transaction_no || null,
           paid_amount: req.body.paid_amount || 0,
           notes: req.body.notes || null,
           delivery_address: req.body.delivery_address || req.body.address || null,

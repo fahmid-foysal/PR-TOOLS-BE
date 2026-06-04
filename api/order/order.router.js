@@ -31,20 +31,20 @@ router.post(
       .notEmpty()
       .withMessage("payment_method cannot be empty"),
 
-    body("account_number")
-      .trim()
-      .notEmpty()
-      .withMessage("account_number cannot be empty"),
+    // body("account_number")
+    //   .trim()
+    //   .notEmpty()
+    //   .withMessage("account_number cannot be empty"),
 
-    body("transaction_no")
-      .trim()
-      .notEmpty()
-      .withMessage("transaction_no cannot be empty"),
+    // body("transaction_no")
+    //   .trim()
+    //   .notEmpty()
+    //   .withMessage("transaction_no cannot be empty"),
 
-    body("paid_amount")
-      .optional({ nullable: true, checkFalsy: true })
-      .isFloat({ min: 0 })
-      .withMessage("paid_amount must be a non-negative number"),
+    // body("paid_amount")
+    //   .optional({ nullable: true, checkFalsy: true })
+    //   .isFloat({ min: 0 })
+    //   .withMessage("paid_amount must be a non-negative number"),
 
     body("map_link")
       .optional({ nullable: true, checkFalsy: true })
