@@ -237,6 +237,35 @@ module.exports = {
     };
   },
 
+  getProductAutocompleteSuggestions: async (searchQuery, limit = 10) => {
+    const normalizedSearch = searchQuery ? searchQuery.trim() : "";
+    if (!normalizedSearch) return [];
+
+    const safeLimit = Number(limit) > 0 ? Math.min(Number(limit), 20) : 10;
+    const startsWithKeyword = `${normalizedSearch}%`;
+    const containsKeyword = `%${normalizedSearch}%`;
+
+    const [rows] = await pool.query(
+      `
+        SELECT
+          p.id,
+          p.product_name
+        FROM products p
+        WHERE p.product_name LIKE ?
+        ORDER BY
+          CASE
+            WHEN p.product_name LIKE ? THEN 0
+            ELSE 1
+          END,
+          p.product_name ASC
+        LIMIT ?
+      `,
+      [containsKeyword, startsWithKeyword, safeLimit]
+    );
+
+    return rows;
+  },
+
   // =========================
   // PRODUCT IMAGES
   // =========================

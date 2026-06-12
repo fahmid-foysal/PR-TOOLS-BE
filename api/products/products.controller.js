@@ -6,6 +6,7 @@ const {
   deleteProduct,
   getProductById,
   getProducts,
+  getProductAutocompleteSuggestions,
 
   createProductImages,
   getProductImagesByProductIds,
@@ -173,6 +174,35 @@ module.exports = {
       return res.status(500).json({
         status: "error",
         message: "Failed to fetch products",
+      });
+    }
+  },
+
+  getProductAutocomplete: async (req, res) => {
+    try {
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          status: "error",
+          message: errors.array(),
+        });
+      }
+
+      const suggestions = await getProductAutocompleteSuggestions(
+        req.query.search_query,
+        req.query.limit
+      );
+
+      return res.status(200).json({
+        status: "success",
+        data: suggestions,
+      });
+    } catch (error) {
+      console.error("getProductAutocomplete error:", error);
+      return res.status(500).json({
+        status: "error",
+        message: "Failed to fetch product autocomplete suggestions",
       });
     }
   },

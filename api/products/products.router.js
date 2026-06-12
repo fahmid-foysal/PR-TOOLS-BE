@@ -8,6 +8,7 @@ const upload = createUploader("uploads/products");
 const {
   addProduct,
   getAllProducts,
+  getProductAutocomplete,
   getProductDetails,
   editProduct,
   removeProduct,
@@ -125,6 +126,22 @@ router.get(
       .trim(),
   ],
   getAllProducts
+);
+
+router.get(
+  "/product/autocomplete",
+  [
+    query("search_query")
+      .trim()
+      .notEmpty()
+      .withMessage("search_query cannot be empty"),
+
+    query("limit")
+      .optional()
+      .isInt({ min: 1, max: 20 })
+      .withMessage("limit must be an integer between 1 and 20"),
+  ],
+  getProductAutocomplete
 );
 
 router.get(
